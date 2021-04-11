@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src='vendors/three.min.js'></script>
+<!-- ar.js -->
+<script src="vendors/ar.js"></script>
+<!-- three.interactive -->
+<script src="vendors/three.interactive/three.interactive.js"></script>
+<script src='vendors/GLTFLoader.js'></script>
+<script>THREEx.ArToolkitContext.baseURL = '../'</script>
+
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'><div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+	<!-- <a href="https://github.com/AR-js-org/AR.js/" target="_blank">AR.js</a> - three.js camera transform
+	<br/>
+	Contact me any time at <a href='https://twitter.com/nicolocarp' target='_blank'>@nicolocarp</a> -->
+</div><script>
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Init
+	//////////////////////////////////////////////////////////////////////////////////
+
+	// init renderer
+	var renderer	= new THREE.WebGLRenderer({
+		antialias: true,
+		alpha: true,
+		logarithmicDepthBuffer: true,
+		colorManagement: true,
+		sortObjects: true
+	});
+	
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+	renderer.setSize( 640, 480 );
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = '0px'
+	renderer.domElement.style.left = '0px'
+	document.body.appendChild( renderer.domElement );
+
+	// array of functions for the rendering loop
+	var onRenderFcts = [];
+
+	// init scene and camera
+	var scene	= new THREE.Scene();
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Initialize a basic camera
+	//////////////////////////////////////////////////////////////////////////////////
+
+	// Create a camera
+	var camera = new THREE.PerspectiveCamera();
+	scene.add(camera);
+
+
+	const interactionManager = new THREE.InteractionManager(
+        renderer,
+        camera,
+        renderer.domElement
+      );
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	var arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam
+		sourceType : 'webcam',
+
+		// // to read from an image
+		// sourceType : 'image',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',
+
+		// to read from a video
+		// sourceType : 'video',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',
+	})
+
+	arToolkitSource.init(function onReady(){
+        setTimeout(() => {
+            onResize()
+        }, 2000);
+	})
+
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+    })
+
+	function onResize(){
+		arToolkitSource.onResizeElement()
+		arToolkitSource.copyElementSizeTo(renderer.domElement)
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+
+
+	// create arToolkitContext
+
+	var arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+	})
+
+	// update artoolkit on every frame
+	onRenderFcts.push(function(){
+		if( arToolkitSource.ready === false )	return
+
+		arToolkitContext.update( arToolkitSource.domElement )
+
+		// update scene.visible if the marker is seen
+		scene.visible = camera.visible
+	})
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          Create a ARMarkerControls
+	////////////////////////////////////////////////////////////////////////////////
+
+	// init controls for camera
+function createARTContent() {
+	const markerRoot1 = new THREE.Group();
+	markerRoot1.name = 'marker1'
+	scene.add(markerRoot1);
+
+	new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro',
+		// patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
+		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+		// changeMatrixMode: 'cameraTransformMatrix'
+	})
+
+	const markerRoot2 = new THREE.Group();
+	markerRoot2.name = 'marker2'
+	scene.add(markerRoot2)
+
+	new THREEx.ArMarkerControls(arToolkitContext, markerRoot2, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
+		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+		// changeMatrixMode: 'cameraTransformMatrix'
+	})
+	// as we do changeMatrixMode: 'cameraTransformMatrix', start with invisible scene
+	// scene.visible = false
+
+	
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add an object in the scene
+	//////////////////////////////////////////////////////////////////////////////////
+
+		const threeGLTFLoader = new THREE.GLTFLoader();
+        var model;
+        const light = new THREE.DirectionalLight( 0xffffff, 5);
+
+        threeGLTFLoader.load("./resources/lightscene.gltf", function(gltf) {
+        	model = gltf.scene;
+        	model.scale.set(1, 1, 1);
+        	// model.position.y -= 1; 
+        	// model.rotation.x = -Math.PI / 4;
+        	model.rotation.y = -Math.PI / 4;
+        	/*model.children[6].scale.set(0.5, 0.5, 0.5);
+        	model.children[7].scale.set(0.5, 0.5, 0.5);
+        	console.log(model.children[6].material);
+			light.position.set(model.children[6].position.x / 2, model.children[6].position.y / 2, model.children[6].position.z / 2);*/
+			// light.add(model.children[6]);
+			var bulb = model.children.find(child => child.name === "Sphere002")
+			var button = model.children.find(child => child.name === "Button")
+			function toggleLight() {
+				if(bulbLight.intensity > 0) {
+					bulbLight.intensity = 0
+					// button.scale.y = -0.25
+					button.position.y = 0.9
+				}
+				else {
+					bulbLight.intensity = 15
+					button.position.y = 0.75
+				}
+			}
+        	/*bulb.material.emissive.setHex(0x00ffff)
+        	bulb.material.emissiveIntensity = 20*/
+        	let bulbLight = new THREE.PointLight(0xffffff, 0, 100, 2);
+        	bulbLight.position.set(bulb.position.x, bulb.position.y - 0.5, bulb.position.z)
+        	bulbLight.castShadow = true
+        	scene.add(bulbLight)
+			scene.add(light);
+
+        	button.addEventListener('mousedown', (event) => {  
+        		console.log(event); 
+          		toggleLight()
+        	});
+        	/*button.addEventListener('mouseup', (event) => {
+          		console.log(bulbLight);
+        	});
+        	bulb.addEventListener('click', (event) => {
+          		console.log(event);
+          		toggleLight()
+        	});*/
+			
+			interactionManager.add(button);
+
+        	markerRoot1.add(model);
+        })
+		// add a torus knot
+		const geometry = new THREE.BoxGeometry(1, 1, 1);
+      	const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      	const material2 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		var mesh = new THREE.Mesh( geometry, material );
+		mesh.position.y	= geometry.parameters.height / 2
+		// scene.add( mesh );
+		const mesho = new THREE.Mesh(geometry, material2);
+		// mesh.position.y	= 0.5
+		markerRoot2.add(mesh);
+
+		// mesho.position.x = -4;
+
+		onRenderFcts.push(function(delta){
+			mesh.rotation.x += Math.PI * delta
+		})
+
+		
+}
+createARTContent();	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the whole thing on the page
+	//////////////////////////////////////////////////////////////////////////////////
+
+	// render the scene
+	onRenderFcts.push(function(){
+		renderer.render( scene, camera );
+	})
+
+	// run the rendering loop
+	var lastTimeMsec = null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec - 1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+
+		interactionManager.update();
+		// call each update function
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	})
+
+</script></body>
