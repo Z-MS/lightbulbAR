@@ -97,7 +97,7 @@
 	// create arToolkitContext
 
 	var arToolkitContext = new THREEx.ArToolkitContext({
-		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '/data/data/camera_para.dat',
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
 		detectionMode: 'mono',
 	})
 	// initialize it
@@ -128,7 +128,7 @@ function createARTContent() {
 
 	new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
 		type : 'pattern',
-		patternUrl : THREEx.ArToolkitContext.baseURL + '/data/data/patt.hiro',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro',
 		// patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
 		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
 		// changeMatrixMode: 'cameraTransformMatrix'
@@ -140,7 +140,7 @@ function createARTContent() {
 
 	new THREEx.ArMarkerControls(arToolkitContext, markerRoot2, {
 		type : 'pattern',
-		patternUrl : THREEx.ArToolkitContext.baseURL + '/data/data/patt.kanji',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
 		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
 		// changeMatrixMode: 'cameraTransformMatrix'
 	})
@@ -163,11 +163,6 @@ function createARTContent() {
         	// model.position.y -= 1; 
         	// model.rotation.x = -Math.PI / 4;
         	model.rotation.y = -Math.PI / 4;
-        	/*model.children[6].scale.set(0.5, 0.5, 0.5);
-        	model.children[7].scale.set(0.5, 0.5, 0.5);
-        	console.log(model.children[6].material);
-			light.position.set(model.children[6].position.x / 2, model.children[6].position.y / 2, model.children[6].position.z / 2);*/
-			// light.add(model.children[6]);
 			var bulb = model.children.find(child => child.name === "Sphere002")
 			var button = model.children.find(child => child.name === "Button")
 			function toggleLight() {
@@ -181,8 +176,6 @@ function createARTContent() {
 					button.position.y = 0.75
 				}
 			}
-        	/*bulb.material.emissive.setHex(0x00ffff)
-        	bulb.material.emissiveIntensity = 20*/
         	let bulbLight = new THREE.PointLight(0xffffff, 0, 100, 2);
         	bulbLight.position.set(bulb.position.x, bulb.position.y - 0.5, bulb.position.z)
         	bulbLight.castShadow = true
@@ -193,13 +186,6 @@ function createARTContent() {
         		console.log(event); 
           		toggleLight()
         	});
-        	/*button.addEventListener('mouseup', (event) => {
-          		console.log(bulbLight);
-        	});
-        	bulb.addEventListener('click', (event) => {
-          		console.log(event);
-          		toggleLight()
-        	});*/
 			
 			interactionManager.add(button);
 
@@ -211,12 +197,7 @@ function createARTContent() {
       	const material2 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 		var mesh = new THREE.Mesh( geometry, material );
 		mesh.position.y	= geometry.parameters.height / 2
-		// scene.add( mesh );
-		const mesho = new THREE.Mesh(geometry, material2);
-		// mesh.position.y	= 0.5
 		markerRoot2.add(mesh);
-
-		// mesho.position.x = -4;
 
 		onRenderFcts.push(function(delta){
 			mesh.rotation.x += Math.PI * delta
